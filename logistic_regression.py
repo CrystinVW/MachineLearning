@@ -1,9 +1,6 @@
 from __future__ import division
 import numpy as np
 from scipy.sparse import csc_matrix
-from __future__ import division
-import numpy as np
-from scipy.sparse import csc_matrix
 np.set_printoptions(threshold='nan')
 
 
