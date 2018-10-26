@@ -1,0 +1,299 @@
+# -*- coding: utf-8 -*-
+# Author: Crystin Rodrick
+
+# Import libraries
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# List used for plotting purposes
+SSE = []
+
+# Grabs the size of the file
+def grabSize():
+    columns = 0
+    dataset = getDataset()
+    rows = len(dataset)
+    for _ in dataset:
+        columns += 1
+
+    print("There are ", rows, " samples in the dataset. \nThere are ", columns - 1, " attributes per sample.")
+    print("This makes a total of ", columns * rows, " items in the dataset.")
+
+# Gets the dataset
+def getDataset():
+    dataset = pd.read_csv('/Users/crystinrodrick/PycharmProjects/MachineLearning2018/Features_Variant_1.csv')
+    dataset = dataset.drop(dataset.columns[[37]], axis=1)
+    return dataset
+
+# Splits the datasets into different sizes (without standardization)
+def splittingData_no_standardization(trainingSet):
+
+    # Assume n = columns and m = rows
+    X = getDataset().iloc[:, :-1].values  # Matrix of columns and rows
+    y = getDataset().iloc[:, -1].values  # vector of rows x 1
+    Xtrain, Xtest, Ytrain, Ytest = train_test_split(X, y, test_size=trainingSet, random_state=123456)
+
+    return Xtrain, Xtest, Ytrain, Ytest
+
+# Splits the datasets into different sizes (with standardization)
+def splittingData(trainingSet):
+
+    # Assume n = columns and m = rows
+    X = getDataset().iloc[:, :-1].values  # Matrix of columns and rows
+    y = getDataset().iloc[:, -1].values  # vector of rows x 1
+    Xtrain, Xtest, Ytrain, Ytest = train_test_split(X, y, test_size=trainingSet, random_state=123456)
+
+    # Standardization
+    scA = StandardScaler()
+    Xtrain = scA.fit_transform(Xtrain)
+    Xtest = scA.fit_transform(Xtest)
+    return Xtrain, Xtest, Ytrain, Ytest
+
+
+
+# Runs through the entirety of calculating w, the predicted values, and the SSE (without standarization)
+def run_thru(trainingSet, setID):
+
+    ##### Part 2 #########
+    # Assume we have m samples and n attributes per sample. Then make an appropriate X matrix and y vector.
+    # The dimension of X should be m x n and dimension of y vector would be m x 1.
+
+
+    # OR you could use the shape command
+    # print("The shape of the data is: ", getDataset().shape)
+    #  Determines Matrix size of n x m entries
+    X = getDataset().iloc[:, :-1].values  # Matrix of columns and rows
+    y = getDataset().iloc[:, -1].values  # vector of rows x 1
+    Xtrain = splittingData_no_standardization(trainingSet)[0]
+    Xtest = splittingData_no_standardization(trainingSet)[1]
+    Ytrain = splittingData_no_standardization(trainingSet)[2]
+    Ytest = splittingData_no_standardization(trainingSet)[3]
+    # For training set A grab the transpose of the training matrix and the inverse
+    Xtrain = np.matrix(Xtrain)
+    X_T = Xtrain.T
+    print("X_T", X_T)
+    # The first half of the equation (X^T * X)^1
+    XTXI = Xtrain.I * X_T.I
+    print("XTXI", XTXI)
+    # print(XTXI.shape)
+
+    # Reformat the shape of the y training set
+    Ytrain = Ytrain[:, None]
+
+    # The second half of the equation (X^T*y)
+    XTy = X_T * Ytrain
+    # print(XTy.shape)
+
+    # Find the matrix w for the training set
+    # w = (X^TX)^-1X^Ty
+    w = XTXI * XTy
+    print("For Training set ", setID ," w = \n", w)
+
+    # Find the transpose of the w matrix for training set A
+    transw = w.T
+
+    # Grab the predicted y which is found by w^Tx
+    # print(w.T.shape)
+
+    # Multiply the xs of the testing set against the ws add all of those
+    # print(Xtest.shape)
+    Xtest = np.matrix(Xtest)
+
+
+    # Reformat the shape of the y testing set
+    Ytest = Ytest[:, None]
+
+    # Predicted y = wT*X
+    predY = transw * Xtest.T
+    print("The predicted Y values for Training Set ", setID ," is: ", predY)
+
+    sse = 0
+    # For every row (roughly 8000)
+    for i in range(len(Xtest)):
+        se = (predY.T[i] - Ytest[i]) ** 2
+        sse = sse + se
+
+    print("The Sum of Squared Errors for Training Set ", setID ," is: ", sse)
+
+    SSE.append(int(sse))
+
+
+# Runs through the entirety of calculating w, the predicted values, and the SSE (with standardization)
+def run_thru_w_standardization(trainingSet, setID):
+
+
+    ##### Part 2 #########
+    # Assume we have m samples and n attributes per sample. Then make an appropriate X matrix and y vector.
+    # The dimension of X should be m x n and dimension of y vector would be m x 1.
+
+
+    # OR you could use the shape command
+    # print("The shape of the data is: ", getDataset().shape)
+    #  Determines Matrix size of n x m entries
+    X = getDataset().iloc[:, :-1].values  # Matrix of columns and rows
+    y = getDataset().iloc[:, -1].values  # vector of rows x 1
+
+    Xtrain = splittingData(trainingSet)[0]
+    Xtest = splittingData(trainingSet)[1]
+    Ytrain = splittingData(trainingSet)[2]
+    Ytest = splittingData(trainingSet)[3]
+
+    # For training set A grab the transpose of the training matrix and the inverse
+    Xtrain = np.matrix(Xtrain)
+    X_T = Xtrain.T
+
+    # The first half of the equation (X^T * X)^1
+    XTXI = Xtrain.I * X_T.I
+
+    # print(XTXI.shape)
+
+    # Reformat the shape of the y training set
+    Ytrain = Ytrain[:, None]
+
+    # The second half of the equation (X^T*y)
+    XTy = X_T * Ytrain
+
+    # Find the matrix w for the training set
+    # w = (X^TX)^-1X^Ty
+
+    w = XTXI * XTy
+    print("For Training set ", setID ," w = \n", w, "\n")
+
+    # Find the transpose of the w matrix for training set A
+    transw = w.T
+    Xtest = np.matrix(Xtest)
+
+
+    # Reformat the shape of the y testing set
+    Ytest = Ytest[:, None]
+
+    # Predicted y
+    # Grab the predicted y which is found by w^Tx
+    predY = transw * Xtest.T
+    print("The predicted Y values for Training Set ", setID ," is: ", predY, "\n")
+
+    sse = 0
+    # For every row (roughly 8000)
+    for i in range(len(Xtest)):
+        se = (predY.T[i] - Ytest[i]) ** 2
+        sse = sse + se
+
+    print("The Sum of Squared Errors for Training Set ", setID ," is: ", sse, "\n")
+    SSE.append(int(sse))
+
+def main():
+
+    # Grab dataset
+    getDataset()
+
+    # Part 1
+    # Load the data into memory. How many samples are there in the dataset? How many attributes per sample did you see?
+    grabSize()
+
+
+
+    ########## Part 3 ############################
+    # Prepare 3 datasets from the data you loaded in memory:
+    # Set the seed for the random number generator to be 123456
+
+    # Split the data at random into set A: containg 80% of the samples for training and 20% for testing
+
+
+    # Part 4
+    # For each of the training datasets, solve w for the linear regression hypotheses and predict the target
+    # values. Present evaluatin of prediction performance based on SSE. Draw a plot comparing
+    # performances of the three sets.
+
+
+
+
+    # Run through with training set A
+    trainingSetA = 0.2
+    splittingData_no_standardization(trainingSetA)
+    run_thru(trainingSetA, setID="A")
+
+    # Run through with training set B
+    trainingSetB = 0.5
+    splittingData_no_standardization(trainingSetB)
+    run_thru(trainingSetB, "B")
+
+    # Run through with training set C
+    trainingSetC = 0.8
+    splittingData_no_standardization(trainingSetC)
+    run_thru(trainingSetB, "C")
+
+
+    # Plot performance (SSE)
+    # line 1 points
+    x1 = [1, 2, 3]
+    y1 = SSE
+
+
+    # plotting the line 1 points
+    plt.plot(x1, y1, label="Outcome without Standardization")
+
+    # naming the x axis
+    plt.xlabel('Training Sets A, B, C represent 1, 2, 3 respectively')
+    # naming the y axis
+    plt.ylabel('Sum of Squared Error')
+    # giving a title to my graph
+    plt.title('Comparison of Squared Errors')
+
+    # show a legend on the plot
+    plt.legend()
+
+    # function to show the plot
+    plt.show()
+
+
+    ########### Now do this with starardization ###################
+
+    # Part 6
+    # For each of the three training datasets A, B, C, perform normalization on each
+    # of the attributes. And find the hypothesis and plot again. Use the standardization
+    # policy for this
+
+    del SSE[:]
+    # Run through with training set A
+    print("WITH STANDARDIZATION\n")
+    splittingData(trainingSetA)
+    run_thru_w_standardization(trainingSetA, setID="A")
+
+    # Run through with training set B
+    splittingData(trainingSetB)
+    run_thru_w_standardization(trainingSetB, "B")
+
+    # Run through with training set C
+    splittingData(trainingSetC)
+    run_thru_w_standardization(trainingSetB, "C")
+
+    # Plot
+    # Performance of each test
+    # Plot performance
+    # line 1 points
+    x1 = [1, 2, 3]
+    y1 = SSE
+
+    # plotting the line 1 points
+    plt.plot(x1, y1, label="Outcome with Standardization")
+
+    # naming the x axis
+    plt.xlabel('Training Sets A, B, C')
+    # naming the y axis
+    plt.ylabel('Sum of Squared Error')
+    # giving a title to my graph
+    plt.title('Comparison of Squared Errors')
+
+    # show a legend on the plot
+    plt.legend()
+
+    # function to show the plot
+    plt.show()
+
+
+# Skip Part 5
+
+main()
